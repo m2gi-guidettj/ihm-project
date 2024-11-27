@@ -4,7 +4,7 @@ class ReceiptInterface:
     def __init__(self):
         self.root = Tk()
         self.root.title("Plaque de Cuisson Connectée")
-        self.root.geometry("1000x1000")
+        self.root.geometry("800x700")
 
         # Ajouter une étiquette principale
         label_title = Label(self.root, text="Contrôle de la Plaque de Cuisson", font=("Arial", 30, "bold"))
@@ -45,15 +45,15 @@ class ReceiptInterface:
     def create_recipes(self):
         """Créer les boutons pour afficher les recettes."""
         for recipe in self.recipes:
-            button = Button(self.frame_recipes, text=recipe["title"], font=("Arial", 18), width=20, height=2,
+            button = Button(self.frame_recipes, text=recipe["title"], font=("Arial", 18), width=20, height=1,
                             command=lambda r=recipe: self.show_recipe_description(r))
             button.pack(pady=5)
 
         # Zone pour afficher la description
-        self.recipe_title = Label(self.frame_recipes, text="", font=("Arial", 22, "bold"), wraplength=750, justify="center")
+        self.recipe_title = Label(self.frame_recipes, text="", font=("Arial", 16, "bold"), wraplength=750, justify="center")
         self.recipe_title.pack(pady=10)
 
-        self.recipe_description = Label(self.frame_recipes, text="", font=("Arial", 16), wraplength=750, justify="left")
+        self.recipe_description = Label(self.frame_recipes, text="", font=("Arial", 13), wraplength=750, justify="left")
         self.recipe_description.pack(pady=10)
 
     def show_recipe_description(self, recipe):

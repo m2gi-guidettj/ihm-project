@@ -2,8 +2,8 @@ import cv2
 import mediapipe as mp
 import pyautogui
 from threading import Thread
-import tkinter as tk
 from receipt_interface import ReceiptInterface
+
 
 def calculate_distance(point1, point2):
     """Calcule la distance euclidienne entre deux points."""
@@ -30,11 +30,12 @@ def process_gestures(interface):
         if results.multi_hand_landmarks:
             for landmarks in results.multi_hand_landmarks:
                 # Détecter les points du majeur et du pouce
+                index_tip = landmarks.landmark[mp_hands.HandLandmark.INDEX_FINGER_TIP]
                 middle_tip = landmarks.landmark[mp_hands.HandLandmark.MIDDLE_FINGER_TIP]
                 thumb_tip = landmarks.landmark[mp_hands.HandLandmark.THUMB_TIP]
 
-                # Déplacer la souris avec le majeur
-                x, y = int(middle_tip.x * screen_width), int(middle_tip.y * screen_height)
+                x, y = int(index_tip.x * screen_width), int(index_tip.y * screen_height)
+                 # Envoyer les nouvelles coordonnées à la queue
                 pyautogui.moveTo(x, y)
                 
                 distance = calculate_distance(middle_tip, thumb_tip)
