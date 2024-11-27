@@ -75,16 +75,16 @@ def process_gestures(interface):
 
         if results.multi_hand_landmarks:
             for landmarks in results.multi_hand_landmarks:
-                # Détecter les points de la main
-                index_tip = landmarks.landmark[mp_hands.HandLandmark.INDEX_FINGER_TIP]
+                # Détecter les points du majeur et du pouce
+                middle_tip = landmarks.landmark[mp_hands.HandLandmark.MIDDLE_FINGER_TIP]
                 thumb_tip = landmarks.landmark[mp_hands.HandLandmark.THUMB_TIP]
 
-                # Déplacer la souris avec l'index
-                x, y = int(index_tip.x * screen_width), int(index_tip.y * screen_height)
+                # Déplacer la souris avec le majeur
+                x, y = int(middle_tip.x * screen_width), int(middle_tip.y * screen_height)
                 pyautogui.moveTo(x, y)
 
-                # Détecter si l'index et le pouce se touchent
-                distance = calculate_distance(index_tip, thumb_tip)
+                # Détecter si le majeur et le pouce se touchent
+                distance = calculate_distance(middle_tip, thumb_tip)
                 if distance < 0.05:  # Ajuster le seuil si nécessaire
                     pyautogui.click()  # Effectuer un clic
                     print("Sélection effectuée !")
