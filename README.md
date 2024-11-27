@@ -19,6 +19,7 @@ Before running the code, make sure you have the following dependencies installed
 - OpenCV (`pip install opencv-python`)
 - MediaPipe (`pip install mediapipe`)
 - PyAutoGUI (`pip install pyautogui`)
+`apt-get install python3-tk python3-dev`
 
 ## How to Use
 

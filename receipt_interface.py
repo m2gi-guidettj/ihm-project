@@ -1,23 +1,21 @@
-from tkinter import Tk, Label, Scale, Frame
-import tkinter as tk
-
+from tkinter import *
 
 class ReceiptInterface:
     def __init__(self):
-        self.root = tk.Tk()
+        self.root = Tk()
         self.root.title("Plaque de Cuisson Connectée")
         self.root.geometry("1000x1000")
 
         # Ajouter une étiquette principale
-        label_title = tk.Label(self.root, text="Contrôle de la Plaque de Cuisson", font=("Arial", 30, "bold"))
+        label_title = Label(self.root, text="Contrôle de la Plaque de Cuisson", font=("Arial", 30, "bold"))
         label_title.pack(pady=20)
 
         # Créer une frame pour les contrôles
-        self.frame_controls = tk.Frame(self.root)
+        self.frame_controls = Frame(self.root)
         self.frame_controls.pack(pady=10)
 
         # Ajouter un label pour afficher l'état de la plaque
-        self.status_label = tk.Label(self.root, text="Plaque de cuisson éteinte", font=("Arial", 18), fg="red")
+        self.status_label = Label(self.root, text="Plaque de cuisson éteinte", font=("Arial", 18), fg="red")
         self.status_label.pack(pady=10)
         
         self.volume_slider = None
@@ -35,8 +33,8 @@ class ReceiptInterface:
         ]
 
         # Frame pour les recettes
-        self.frame_recipes = tk.Frame(self.root)
-        self.frame_recipes.pack(fill=tk.BOTH, expand=True)
+        self.frame_recipes = Frame(self.root)
+        self.frame_recipes.pack(fill=BOTH, expand=True)
 
         # Ajouter les recettes
         self.create_recipes()
@@ -47,15 +45,15 @@ class ReceiptInterface:
     def create_recipes(self):
         """Créer les boutons pour afficher les recettes."""
         for recipe in self.recipes:
-            button = tk.Button(self.frame_recipes, text=recipe["title"], font=("Arial", 18), width=20, height=2,
-                               command=lambda r=recipe: self.show_recipe_description(r))
+            button = Button(self.frame_recipes, text=recipe["title"], font=("Arial", 18), width=20, height=2,
+                            command=lambda r=recipe: self.show_recipe_description(r))
             button.pack(pady=5)
 
         # Zone pour afficher la description
-        self.recipe_title = tk.Label(self.frame_recipes, text="", font=("Arial", 22, "bold"), wraplength=750, justify="center")
+        self.recipe_title = Label(self.frame_recipes, text="", font=("Arial", 22, "bold"), wraplength=750, justify="center")
         self.recipe_title.pack(pady=10)
 
-        self.recipe_description = tk.Label(self.frame_recipes, text="", font=("Arial", 16), wraplength=750, justify="left")
+        self.recipe_description = Label(self.frame_recipes, text="", font=("Arial", 16), wraplength=750, justify="left")
         self.recipe_description.pack(pady=10)
 
     def show_recipe_description(self, recipe):
@@ -71,7 +69,7 @@ class ReceiptInterface:
 
         # Afficher le bouton en fonction de l'état
         if not self.power_state:
-            power_button = tk.Button(
+            power_button = Button(
                 self.frame_controls,
                 text="Allumer",
                 font=("Arial", 20, "bold"),
@@ -81,7 +79,7 @@ class ReceiptInterface:
             )
             power_button.pack(pady=20)
         else:
-            off_button = tk.Button(
+            off_button = Button(
                 self.frame_controls,
                 text="Éteindre",
                 font=("Arial", 20, "bold"),
