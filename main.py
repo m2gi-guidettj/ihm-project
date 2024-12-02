@@ -3,7 +3,13 @@ import mediapipe as mp
 import pyautogui
 from threading import Thread
 from receipt_interface import ReceiptInterface
+import queue
+import sys
+import sounddevice as sd
+from vosk import Model, KaldiRecognizer
 
+q = queue.Queue()  # File pour l'audio
+command_queue = queue.Queue()  
 
 def calculate_distance(point1, point2):
     """Calcule la distance euclidienne entre deux points."""
@@ -50,9 +56,87 @@ def process_gestures(interface):
     cap.release()
     cv2.destroyAllWindows()
 
+def callback(indata, frames, time, status):
+    """Callback pour traiter les blocs audio."""
+    if status:
+        print(status, file=sys.stderr)
+    q.put(bytes(indata))
+
+
+def process_voice_commands():
+    """Traitement des commandes vocales pour contrôler l'interface."""
+    try:
+        # Charger le modèle Vosk
+        model = Model(lang="fr")  # Utiliser le modèle en français
+        samplerate = 16000  # Définir une fréquence d'échantillonnage par défaut
+
+        with sd.RawInputStream(samplerate=samplerate, blocksize=8000, dtype="int16", channels=1, callback=callback):
+            print("Détection vocale en cours... (Appuyez sur Ctrl+C pour arrêter)")
+
+            recognizer = KaldiRecognizer(model, samplerate)
+
+            while True:
+                data = q.get()
+                if recognizer.AcceptWaveform(data):
+                    result = recognizer.Result()
+                    print(f"Reconnu : {result}")
+
+                    # Envoi des commandes à la file pour le thread principal
+                    if "allumez" in result:
+                        print("Commande reçue : Allumer la plaque")
+                        command_queue.put("toggle_power")
+                    elif "éteindre" in result:
+                        print("Commande reçue : Éteindre la plaque")
+                        command_queue.put("toggle_power")
+                    elif "recette" in result:
+                        print("Commande reçue : Afficher les recettes")
+                        command_queue.put("show_recipes")
+                    elif "quitter" in result:
+                        print("Commande reçue : Quitter")
+                        command_queue.put("quit")
+                        break
+
+    except KeyboardInterrupt:
+        print("\nDétection vocale arrêtée.")
+    except Exception as e:
+        print(f"Erreur : {e}", file=sys.stderr)
+
+def process_commands(interface):
+    """Traitement des commandes dans le thread principal."""
+    while True:
+        print("Commande :")
+        command = command_queue.get()
+        print(command)
+        if command == "toggle_power":
+            print("Commande : Allumer/Éteindre la plaque")
+            
+            # Appeler toggle_power dans le thread principal de Tkinter
+            interface.toggle_power()
+        elif command == "show_recipes":
+            interface.run() # Afficher les recettes
+        elif command == "quit":
+            interface.root.destroy()
+
 if __name__ == "__main__":
     interface = ReceiptInterface()
-    thread = Thread(target=process_gestures, args=(interface,))
-    thread.start()
-    interface.run()  # Runs in the main thread
-    thread.join()
+    
+    # Thread pour la détection des gestes
+    gesture_thread = Thread(target=process_gestures, args=(interface,))
+    gesture_thread.start()
+    
+    # Thread pour la détection des commandes vocales
+    voice_thread = Thread(target=process_voice_commands)
+    voice_thread.start()
+    
+    # Thread pour l'exécution de l'interface
+    interface_thread = Thread(target=interface.run)
+    interface_thread.start()
+    
+    # Gérer les commandes dans le thread principal
+    process_commands(interface)
+
+    # Attendre la fin des threads
+    gesture_thread.join()
+    voice_thread.join()
+    interface_thread.join()
+
