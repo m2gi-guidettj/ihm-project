@@ -1,110 +1,129 @@
 from tkinter import *
+from PIL import Image, ImageTk
+from PIL.Image import Resampling
 
 class ReceiptInterface:
     def __init__(self):
         self.root = Tk()
-        self.root.title("Plaque de Cuisson Connectée")
+        self.root.title("Recettes et Détails")
         self.root.geometry("800x700")
-
-        # Ajouter une étiquette principale
-        label_title = Label(self.root, text="Contrôle de la Plaque de Cuisson", font=("Arial", 30, "bold"))
-        label_title.pack(pady=20)
-
-        # Créer une frame pour les contrôles
-        self.frame_controls = Frame(self.root)
-        self.frame_controls.pack(pady=10)
-
-        # Ajouter un label pour afficher l'état de la plaque
-        self.status_label = Label(self.root, text="Plaque de cuisson éteinte", font=("Arial", 18), fg="red")
-        self.status_label.pack(pady=10)
-        
-        self.volume_slider = None
-
-        # Suivi de l'état de la plaque
-        self.power_state = False
 
         # Liste des recettes
         self.recipes = [
-            {"title": "Gâteau au Chocolat", "description": "Un gâteau moelleux au chocolat, parfait pour les amateurs de sucré."},
-            {"title": "Gâteau aux Pommes", "description": "Un gâteau léger avec des morceaux de pommes, idéal pour accompagner un café."},
-            {"title": "Gâteau au Fromage", "description": "Un gâteau crémeux à base de fromage blanc, idéal après un repas copieux."},
-            {"title": "Gâteau à la Vanille", "description": "Un classique intemporel ! Ce gâteau moelleux à la vanille est léger et parfumé."},
-            {"title": "Gâteau au Citron", "description": "Un gâteau frais et acidulé avec une touche de citron. Parfait pour ceux qui aiment les saveurs acidulées."}
+            {
+                "title": "Gâteau au Chocolat",
+                "description": "Un gâteau moelleux au chocolat, parfait pour les amateurs de sucré.",
+                "image": "chocolate_cake.jpg"
+            },
+            {
+                "title": "Gâteau aux Pommes",
+                "description": "Un gâteau léger avec des morceaux de pommes, idéal pour accompagner un café.",
+                "image": "apple_cake.jpg"
+            },
+            {
+                "title": "Gâteau au Fromage",
+                "description": "Un gâteau crémeux à base de fromage blanc, idéal après un repas copieux.",
+                "image": "cheese_cake.jpg"
+            },
+            {
+                "title": "Gâteau au Citron",
+                "description": "Un gâteau frais et acidulé avec une touche de citron. Parfait pour ceux qui aiment les saveurs acidulées.",
+                "image": "lemon_cake.jpg"
+            }
         ]
 
+        # Ajouter une étiquette principale
+        label_title = Label(self.root, text="Recettes Disponibles", font=("Arial", 24, "bold"))
+        label_title.pack(pady=20)
+
         # Frame pour les recettes
-        self.frame_recipes = Frame(self.root)
-        self.frame_recipes.pack(fill=BOTH, expand=True)
+        self.recipes_frame = Frame(self.root)
+        self.recipes_frame.pack(fill=BOTH, expand=True)
 
-        # Ajouter les recettes
-        self.create_recipes()
+        self.display_recipes()
 
-        # Afficher les contrôles
-        self.update_controls()
-
-    def create_recipes(self):
-        """Créer les boutons pour afficher les recettes."""
+    def display_recipes(self):
+        """Afficher les recettes avec leurs images et descriptions succinctes."""
         for recipe in self.recipes:
-            button = Button(self.frame_recipes, text=recipe["title"], font=("Arial", 18), width=20, height=1,
-                            command=lambda r=recipe: self.show_recipe_description(r))
-            button.pack(pady=5)
+            # Charger l'image
+            try:
+                img = Image.open(recipe["image"])
+                img = img.resize((100, 100), Resampling.LANCZOS)
+                photo = ImageTk.PhotoImage(img)
+            except Exception as e:
+                print(f"Erreur de chargement d'image : {e}")
+                photo = None
 
-        # Zone pour afficher la description
-        self.recipe_title = Label(self.frame_recipes, text="", font=("Arial", 16, "bold"), wraplength=750, justify="center")
-        self.recipe_title.pack(pady=10)
+            # Cadre pour chaque recette
+            recipe_frame = Frame(self.recipes_frame, bd=2, relief=SOLID, padx=10, pady=10)
+            recipe_frame.pack(pady=10, fill=X)
 
-        self.recipe_description = Label(self.frame_recipes, text="", font=("Arial", 13), wraplength=750, justify="left")
-        self.recipe_description.pack(pady=10)
+            # Afficher l'image
+            if photo:
+                img_label = Label(recipe_frame, image=photo)
+                img_label.image = photo
+                img_label.pack(side=LEFT, padx=10)
 
-    def show_recipe_description(self, recipe):
-        """Afficher la description de la recette sélectionnée."""
-        self.recipe_title.config(text=recipe["title"])
-        self.recipe_description.config(text=recipe["description"])
+            # Texte : titre et bouton
+            text_frame = Frame(recipe_frame)
+            text_frame.pack(side=LEFT, fill=BOTH, expand=True)
 
-    def update_controls(self):
-        """Met à jour les contrôles en fonction de l'état de la plaque."""
-        # Efface les anciens widgets dans la frame des contrôles
-        for widget in self.frame_controls.winfo_children():
-            widget.destroy()
+            title_label = Label(text_frame, text=recipe["title"], font=("Arial", 16, "bold"))
+            title_label.pack(anchor=W)
 
-        # Afficher le bouton en fonction de l'état
-        if not self.power_state:
-            power_button = Button(
-                self.frame_controls,
-                text="Allumer",
-                font=("Arial", 20, "bold"),
-                width=15,
-                height=2,
-                command=self.toggle_power
+            button = Button(
+                text_frame,
+                text="Voir Détails",
+                command=lambda r=recipe: self.show_recipe_details(r),
+                font=("Arial", 14, "bold"),  # Augmenter la taille du texte
+                width=110,  # Taille du bouton
+                height=2,  # Taille du bouton
+               
             )
-            power_button.pack(pady=20)
-        else:
-            off_button = Button(
-                self.frame_controls,
-                text="Éteindre",
-                font=("Arial", 20, "bold"),
-                width=15,
-                height=2,
-                command=self.toggle_power
-            )
-            off_button.pack(pady=20)
+            button.pack(anchor=W, pady=10)
 
-    def toggle_power(self):
-        """Alterner entre Allumer et Éteindre la plaque de cuisson."""
-        self.power_state = not self.power_state
-        if self.power_state:
-            self.status_label.config(text="Plaque de cuisson allumée", fg="green")
-        else:
-            self.status_label.config(text="Plaque de cuisson éteinte", fg="red")
+    def show_recipe_details(self, recipe):
+        """Afficher une nouvelle fenêtre avec les détails de la recette."""
+        details_window = Toplevel(self.root)
+        details_window.title(recipe["title"])
 
-        # Mettre à jour les contrôles après changement d'état
-        self.update_controls()
+        # Titre de la recette
+        title_label = Label(details_window, text=recipe["title"], font=("Arial", 20, "bold"))
+        title_label.pack(pady=10)
+
+        # Charger et afficher l'image
+        try:
+            img = Image.open(recipe["image"])
+            img = img.resize((200, 200), Resampling.LANCZOS)
+            photo = ImageTk.PhotoImage(img)
+            img_label = Label(details_window, image=photo)
+            img_label.image = photo
+            img_label.pack(pady=10)
+        except Exception as e:
+            print(f"Erreur de chargement d'image pour les détails : {e}")
+
+        # Description
+        desc_label = Label(details_window, text=recipe["description"], font=("Arial", 14), wraplength=380, justify="left")
+        desc_label.pack(pady=10)
+
+        # Bouton Quitter avec un bouton plus grand
+        quit_button = Button(
+            details_window,
+            text="Quitter",
+            font=("Arial", 16, "bold"),
+            bg="red",
+            fg="white",
+            width=55,  # Taille du bouton
+            height=4,  # Taille du bouton
+            command=details_window.destroy
+        )
+        quit_button.pack(pady=20)
 
     def run(self):
         """Lancer l'interface graphique."""
         self.root.mainloop()
-
-
+        
+        
 if __name__ == "__main__":
     interface = ReceiptInterface()
     interface.run()

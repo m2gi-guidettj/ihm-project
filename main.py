@@ -9,12 +9,24 @@ import sounddevice as sd
 from vosk import Model, KaldiRecognizer
 
 q = queue.Queue()  # File pour l'audio
-command_queue = queue.Queue()  
+command_queue = queue.Queue()  # File pour les commandes
+
+# Suivi de l'état de la plaque
+power_state = False
+
+def toggle_power():
+    """Alterner entre Allumer et Éteindre la plaque de cuisson."""
+    global power_state  # Utilisation de la variable globale
+    power_state = not power_state
+    if power_state:
+        print("Plaque de cuisson allumée")
+    else:
+        print("Plaque de cuisson éteinte")
+
 
 def calculate_distance(point1, point2):
     """Calcule la distance euclidienne entre deux points."""
     return ((point1.x - point2.x) ** 2 + (point1.y - point2.y) ** 2 + (point1.z - point2.z) ** 2) ** 0.5
-
 
 def process_gestures(interface):
     mp_hands = mp.solutions.hands
@@ -22,7 +34,6 @@ def process_gestures(interface):
     mp_drawing = mp.solutions.drawing_utils
     screen_width, screen_height = pyautogui.size()
     cap = cv2.VideoCapture(0)
-    prev_x, prev_y = None, None
 
     while cap.isOpened():
         ret, frame = cap.read()
@@ -41,11 +52,10 @@ def process_gestures(interface):
                 thumb_tip = landmarks.landmark[mp_hands.HandLandmark.THUMB_TIP]
 
                 x, y = int(index_tip.x * screen_width), int(index_tip.y * screen_height)
-                 # Envoyer les nouvelles coordonnées à la queue
                 pyautogui.moveTo(x, y)
-                
+
                 distance = calculate_distance(middle_tip, thumb_tip)
-                
+
                 if distance < 0.05:  # Ajuster le seuil si nécessaire
                     pyautogui.click()  # Effectuer un clic
                     print("Sélection effectuée !")
@@ -62,16 +72,14 @@ def callback(indata, frames, time, status):
         print(status, file=sys.stderr)
     q.put(bytes(indata))
 
-
-def process_voice_commands():
+def process_voice_commands(interface):
     """Traitement des commandes vocales pour contrôler l'interface."""
     try:
-        # Charger le modèle Vosk
         model = Model(lang="fr")  # Utiliser le modèle en français
         samplerate = 16000  # Définir une fréquence d'échantillonnage par défaut
 
         with sd.RawInputStream(samplerate=samplerate, blocksize=8000, dtype="int16", channels=1, callback=callback):
-            print("Détection vocale en cours... (Appuyez sur Ctrl+C pour arrêter)")
+            print("Détection vocale en cours...")
 
             recognizer = KaldiRecognizer(model, samplerate)
 
@@ -104,34 +112,29 @@ def process_voice_commands():
 def process_commands(interface):
     """Traitement des commandes dans le thread principal."""
     while True:
-        print("Commande :")
         command = command_queue.get()
-        print(command)
         if command == "toggle_power":
-            print("Commande : Allumer/Éteindre la plaque")
-            
-            # Appeler toggle_power dans le thread principal de Tkinter
-            interface.toggle_power()
+            toggle_power()  # Appeler la fonction toggle_power depuis main
         elif command == "show_recipes":
-            interface.run() # Afficher les recettes
+            interface.run()  # Afficher les recettes
         elif command == "quit":
             interface.root.destroy()
 
 if __name__ == "__main__":
     interface = ReceiptInterface()
-    
+
     # Thread pour la détection des gestes
     gesture_thread = Thread(target=process_gestures, args=(interface,))
     gesture_thread.start()
-    
+
     # Thread pour la détection des commandes vocales
-    voice_thread = Thread(target=process_voice_commands)
+    voice_thread = Thread(target=process_voice_commands, args=(interface,))
     voice_thread.start()
-    
+
     # Thread pour l'exécution de l'interface
     interface_thread = Thread(target=interface.run)
     interface_thread.start()
-    
+
     # Gérer les commandes dans le thread principal
     process_commands(interface)
 
@@ -139,4 +142,3 @@ if __name__ == "__main__":
     gesture_thread.join()
     voice_thread.join()
     interface_thread.join()
-
